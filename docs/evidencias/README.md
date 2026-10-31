@@ -10,3 +10,4 @@ Colocar aqui os prints exigidos pela atividade (nomes sugeridos):
 
 Instruções de como produzir cada uma em [`../setup-github.md`](../setup-github.md).
 6. `06-render-deploy.png`: painel do Render com *Deploy succeeded · Live* e `GET /healthz 200` nos logs (já incluído)
+7. `07-healthz-producao.png`: `/healthz` em produção devolvendo o SHA do commit aprovado (já incluído)

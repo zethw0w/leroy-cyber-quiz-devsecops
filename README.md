@@ -123,6 +123,12 @@ Primeiro deploy do serviço no Render em 31/10/2026 (9:20 GMT-4): **Deploy succe
 
 ![Deploy no Render](docs/evidencias/06-render-deploy.png)
 
+### Verificação em produção
+
+Depois da aprovação da execução #8, `https://leroy-cyber-quiz.onrender.com/healthz` devolve o SHA do commit aprovado (`f4f1256c…`), provando que a imagem em produção é a que passou pela esteira:
+
+![healthz em produção](docs/evidencias/07-healthz-producao.png)
+
 ### Como a esteira faz o deploy (etapa 8)
 
 1. Depois da homologação, o job `deploy-prod` fica **pausado** até um revisor aprovar o environment `producao`.
