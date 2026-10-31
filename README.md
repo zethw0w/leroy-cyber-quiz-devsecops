@@ -89,15 +89,16 @@ O Trivy aparece duas vezes por motivos diferentes. A etapa 4 (`trivy fs`) analis
 
 ## Registro da aprovação humana (produção)
 
-> Preencher após a primeira execução completa. Print da tela de aprovação em `docs/evidencias/`.
+![Aprovação do environment producao](docs/evidencias/03-aprovacao-producao.png)
 
 | Campo | Valor |
 |-------|-------|
-| Aprovador | _nome do integrante revisor_ |
-| Data/hora | _AAAA-MM-DD hh:mm_ |
-| Execução | _link da execução no Actions_ |
-| Commit / imagem | _SHA e digest_ |
-| Base da decisão | _relatórios das etapas 1 a 7 consultados e o que foi observado em cada um_ |
+| Aprovador | Eric Kinoshita (`zethw0w`) |
+| Data/hora | 31/10/2026, ~09:37 (GMT-4) |
+| Execução | [#8 no Actions](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41205291663) (resultado: Success) |
+| Commit / imagem | `f4f1256c884ced766665f659702fd0771085e207` · `ghcr.io/zethw0w/leroy-cyber-quiz-devsecops` · digest `sha256:50d96a842645…` |
+| Base da decisão | Resumo parcial das etapas 1 a 7: 0 segredos (Gitleaks), 0 achados (Semgrep), 0 vulnerabilidades no pip-audit, 0 HIGH/CRITICAL nos dois Trivy (fs e imagem) e 0 alertas High/Medium no ZAP. |
+| Comentário da aprovação | "Etapas 1 a 7 sem achados HIGH/CRITICAL, ZAP sem High/Medium. Aprovado para produção." |
 
 ## Produção (Render)
 
@@ -141,7 +142,20 @@ Passo a passo completo em [`docs/setup-github.md`](docs/setup-github.md).
 
 ## Resumo da Esteira (execução completa)
 
-> Inserir aqui o print da aba **Summary** de uma execução 100% verde: `docs/evidencias/01-execucao-completa.png`.
+Execução [#8](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41205291663) na `main`, com as 8 etapas e o Resumo da Esteira em sucesso:
+
+| # | Etapa | Resultado | Achados |
+|---|-------|-----------|---------|
+| 1 | Secrets (Gitleaks) | success | 0 segredos |
+| 2 | SAST (Semgrep) | success | 0 achados |
+| 3 | Build + dependências | success | 0 vulns (pip-audit) |
+| 4 | SCA (Trivy fs) | success | 0 HIGH/CRITICAL |
+| 5 | Docker build + GHCR | success | digest `sha256:50d96a842645…` |
+| 6 | Scan da imagem (Trivy) | success | 0 HIGH/CRITICAL |
+| 7 | Homologação + ZAP | success | 0 alertas High, 0 Medium |
+| 8 | Aprovação + produção | success | aprovado por `zethw0w` |
+
+> Print da aba **Summary** da execução: `docs/evidencias/01-execucao-completa.png` (a adicionar).
 
 ## Documentação
 
