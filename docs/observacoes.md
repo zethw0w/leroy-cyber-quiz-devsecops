@@ -43,7 +43,7 @@ Toda supressão `nosemgrep` exige linha nesta tabela com a justificativa.
 | Achado | Onde | Classificação | Ação tomada | Resultado |
 |--------|------|---------------|-------------|-----------|
 | Nenhum HIGH/CRITICAL (0) em dependências, Dockerfile (misconfig) e secrets | raiz do repositório | — | Nenhuma ação necessária | Execução #2 e #3, etapa 4: 0 HIGH/CRITICAL |
-| `requests==2.19.1` adicionada de propósito em `demo/gate-deps` (commit `cfc7fd1`) | `requirements.txt` | Vulnerabilidade real (simulada) | **Quality gate bloqueou** a etapa 4 (Trivy fs: 1 HIGH/CRITICAL); as etapas 5 a 8 ficaram *skipped*, então nenhuma imagem foi publicada nem houve deploy. O pip-audit da etapa 3 listou 37 vulnerabilidades, mas não bloqueia: o gate fica no Trivy. A branch não foi mesclada na `main` e foi apagada depois do teste | [Execução #11](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41206630012) e print `docs/evidencias/02-gate-bloqueado.png` |
+| `requests==2.19.1` adicionada de propósito em `demo/gate-deps` (commit `cfc7fd1`) | `requirements.txt` | Vulnerabilidade real (simulada) | **Quality gate bloqueou** a etapa 4 (Trivy fs: 1 HIGH/CRITICAL); as etapas 5 a 8 ficaram *skipped*, então nenhuma imagem foi publicada nem houve deploy. O pip-audit da etapa 3 listou 37 vulnerabilidades, mas não bloqueia: o gate fica no Trivy. A branch não foi mesclada na `main` | [Execução #11](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41206630012) e print `docs/evidencias/02-gate-bloqueado.png` |
 
 Toda CVE em `.trivyignore` exige justificativa aqui (ex.: código vulnerável não alcançável).
 
