@@ -99,9 +99,39 @@ O Trivy aparece duas vezes por motivos diferentes. A etapa 4 (`trivy fs`) analis
 | Commit / imagem | _SHA e digest_ |
 | Base da decisão | _relatórios das etapas 1 a 7 consultados e o que foi observado em cada um_ |
 
-## Produção
+## Produção (Render)
 
-URL do ambiente de produção: **_preencher (ex.: https://leroy-cyber-quiz.onrender.com)_**
+URL do ambiente de produção: **_preencher após o deploy (ex.: https://leroy-cyber-quiz.onrender.com)_**
+
+A produção roda no **Render** (plano Free) a partir da **imagem publicada no GHCR**, a mesma que passou pelas etapas 1 a 7. Nada é reconstruído em produção: o Render apenas baixa `ghcr.io/zethw0w/leroy-cyber-quiz-devsecops:<SHA do commit>`.
+
+### Configuração do serviço
+
+| Item | Valor |
+|------|-------|
+| Tipo | Web Service → **Existing Image** |
+| Imagem | `ghcr.io/zethw0w/leroy-cyber-quiz-devsecops:<SHA>` (pacote público no GHCR, sem credencial) |
+| Nome | `leroy-cyber-quiz` |
+| Região / plano | Oregon · Free (0,1 CPU, 512 MB; hiberna após inatividade, o primeiro acesso pode levar de 30 a 60 s) |
+| Health check | `/healthz` (devolve o SHA do commit em execução) |
+| Porta | `8080` (variável `PORT=8080`) |
+
+### Como a esteira faz o deploy (etapa 8)
+
+1. Depois da homologação, o job `deploy-prod` fica **pausado** até um revisor aprovar o environment `producao`.
+2. Aprovado, a esteira chama o **Deploy Hook** do Render passando `imgURL` com a imagem do commit (tag = SHA).
+3. Em seguida consulta `PROD_URL/healthz` até o SHA retornado ser o do commit atual, provando que a versão certa está no ar.
+4. O resultado vai para o relatório `relatorio-08-producao` e para o Resumo da Esteira.
+
+Configuração no GitHub (`Settings → Environments → producao`):
+
+| Tipo | Nome | Conteúdo |
+|------|------|----------|
+| Required reviewers | — | Eric Kinoshita |
+| Environment secret | `RENDER_DEPLOY_HOOK_URL` | URL do Deploy Hook (Render → serviço → Settings → Deploy Hook). **Credencial: nunca vai para o código nem para o README.** |
+| Environment variable | `PROD_URL` | URL pública do serviço (`https://….onrender.com`) |
+
+Passo a passo completo em [`docs/setup-github.md`](docs/setup-github.md).
 
 ## Resumo da Esteira (execução completa)
 
