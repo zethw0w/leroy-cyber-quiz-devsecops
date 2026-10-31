@@ -101,7 +101,7 @@ O Trivy aparece duas vezes por motivos diferentes. A etapa 4 (`trivy fs`) analis
 
 ## Produção (Render)
 
-URL do ambiente de produção: **_preencher após o deploy (ex.: https://leroy-cyber-quiz.onrender.com)_**
+URL do ambiente de produção: **https://leroy-cyber-quiz.onrender.com**
 
 A produção roda no **Render** (plano Free) a partir da **imagem publicada no GHCR**, a mesma que passou pelas etapas 1 a 7. Nada é reconstruído em produção: o Render apenas baixa `ghcr.io/zethw0w/leroy-cyber-quiz-devsecops:<SHA do commit>`.
 
@@ -115,6 +115,12 @@ A produção roda no **Render** (plano Free) a partir da **imagem publicada no G
 | Região / plano | Oregon · Free (0,1 CPU, 512 MB; hiberna após inatividade, o primeiro acesso pode levar de 30 a 60 s) |
 | Health check | `/healthz` (devolve o SHA do commit em execução) |
 | Porta | `8080` (variável `PORT=8080`) |
+
+### Evidência do primeiro deploy
+
+Primeiro deploy do serviço no Render em 31/10/2026 (9:20 GMT-4): **Deploy succeeded · Live**, imagem do GHCR com tag `d510dd8f…893e`, 25,3 s, e os health checks `GET /healthz` respondendo `200` nos logs.
+
+![Deploy no Render](docs/evidencias/06-render-deploy.png)
 
 ### Como a esteira faz o deploy (etapa 8)
 

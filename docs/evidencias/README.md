@@ -9,3 +9,4 @@ Colocar aqui os prints exigidos pela atividade (nomes sugeridos):
 5. `05-jogo-producao.png`: aplicação em produção
 
 Instruções de como produzir cada uma em [`../setup-github.md`](../setup-github.md).
+6. `06-render-deploy.png`: painel do Render com *Deploy succeeded · Live* e `GET /healthz 200` nos logs (já incluído)
