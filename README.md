@@ -10,9 +10,6 @@ Plataforma educacional de cibersegurança do **Grupo LevelUP** (FIAP Challenge 2
 |------|----|
 | Eric Kinoshita | RM559216 |
 | João Jucá | RM559003 |
-| Lincoln Vieira de Paula | RM565842 |
-| Kaique Barsi Auricchio | RM563446 |
-| Enzo Marins Bernardello | RM561619 |
 
 Turma 2TDCPG · Defesa Cibernética · DevSecOps.
 

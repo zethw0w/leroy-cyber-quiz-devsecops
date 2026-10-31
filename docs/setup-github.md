@@ -3,8 +3,7 @@
 ## 1. Repositório
 
 1. Criar repositório **público** no GitHub e enviar este código (`git init`, `git remote add origin ...`, `git push -u origin main`).
-2. Todos os integrantes devem ter commits no histórico (a contribuição individual pode ser verificada).
-3. Trocar `OWNER/REPO` no `README.md` pelo caminho real.
+2. O repositório fica na conta de Eric Kinoshita, único colaborador do projeto (sem outros usuários adicionados em Settings → Collaborators).
 
 ## 2. Permissões do workflow
 
