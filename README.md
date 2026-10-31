@@ -161,7 +161,25 @@ Execução [#8](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/ru
 | 7 | Homologação + ZAP | success | 0 alertas High, 0 Medium |
 | 8 | Aprovação + produção | success | aprovado por `zethw0w` |
 
-> Print da aba **Summary** da execução: `docs/evidencias/01-execucao-completa.png` (a adicionar).
+![Execução completa](docs/evidencias/01-execucao-completa.png)
+
+## Execução bloqueada por quality gate
+
+Para demonstrar o bloqueio, a branch de teste `demo/gate-deps` (nunca mesclada na `main`) adicionou `requests==2.19.1`, uma versão antiga com CVE HIGH conhecida. A esteira foi **bloqueada na etapa 4 (Trivy fs)**; as etapas 5 a 8 ficaram *skipped*, então nenhuma imagem foi publicada nem houve deploy. Execução: [#11](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41206630012).
+
+![Execução bloqueada pelo gate](docs/evidencias/02-gate-bloqueado.png)
+
+## Imagem no GHCR (Packages)
+
+Imagens publicadas com tag = SHA do commit (`ghcr.io/zethw0w/leroy-cyber-quiz-devsecops:<SHA>`), pacote público:
+
+![GHCR Packages](docs/evidencias/04-packages-ghcr.png)
+
+## Aplicação em produção
+
+`https://leroy-cyber-quiz.onrender.com` (painel pessoal da Marina):
+
+![Jogo em produção](docs/evidencias/05-jogo-producao.png)
 
 ## Documentação
 

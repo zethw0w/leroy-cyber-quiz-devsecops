@@ -1,6 +1,6 @@
 # Principais observações
 
-> **Como usar este arquivo.** A estrutura exigida pelo enunciado está pronta. As linhas marcadas **`PREENCHER`** dependem das execuções reais da esteira no repositório do grupo e **não foram inventadas**: copie cada achado dos relatórios (artifacts), classifique e registre a ação e a evidência. A seção "Controles preventivos" já reflete decisões tomadas no código antes da primeira execução.
+> Registro das execuções reais da esteira (#1 a #8 e a execução bloqueada #11). Os valores vêm dos relatórios e do Resumo da Esteira. Os gates de segredos (Gitleaks) e de SAST (Semgrep) foram exercitados só com repositório limpo; o bloqueio foi demonstrado com o gate de dependências (Trivy). Os controles preventivos abaixo já foram aplicados no código antes da primeira execução.
 
 Classificações permitidas: **Vulnerabilidade real**, **Falso positivo** (com justificativa) ou **Risco aceito** (com justificativa).
 
@@ -23,14 +23,12 @@ Classificações permitidas: **Vulnerabilidade real**, **Falso positivo** (com j
 | Achado | Onde | Classificação | Ação tomada | Resultado |
 |--------|------|---------------|-------------|-----------|
 | Execução limpa no histórico (0 segredos) | repositório | — | Nenhuma ação necessária | Execuções #1, #2 e #3: https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41157850203 |
-| Segredo fictício de teste (ghp_…) em branch `demo/gate-secret` | `src/demo_secret.py` | Vulnerabilidade real (simulada) | Pipeline bloqueada; em um caso real: revogar/rotacionar, limpar histórico, registrar incidente | `PREENCHER`: print do bloqueio e da execução seguinte |
 
 ## Semgrep (etapa 2)
 
 | Achado | Onde | Classificação | Ação tomada | Resultado |
 |--------|------|---------------|-------------|-----------|
 | Nenhum achado (0) com `p/default`, `p/owasp-top-ten`, `p/python`, `p/flask` e `p/dockerfile` | `src/`, `Dockerfile`, `.github/` | — | Nenhuma ação necessária (código escrito já seguindo os controles preventivos) | Execução #3, etapa 2: 0 achados |
-| `eval`/`shell=True` introduzidos em `demo/gate-sast` | `src/app/demo_vuln.py` | Vulnerabilidade real (simulada) | Bloqueio demonstrado e correção | `PREENCHER` |
 
 Toda supressão `nosemgrep` exige linha nesta tabela com a justificativa.
 
@@ -45,7 +43,7 @@ Toda supressão `nosemgrep` exige linha nesta tabela com a justificativa.
 | Achado | Onde | Classificação | Ação tomada | Resultado |
 |--------|------|---------------|-------------|-----------|
 | Nenhum HIGH/CRITICAL (0) em dependências, Dockerfile (misconfig) e secrets | raiz do repositório | — | Nenhuma ação necessária | Execução #2 e #3, etapa 4: 0 HIGH/CRITICAL |
-| `requests==2.19.1` (HIGH) em `demo/gate-deps` | `requirements.txt` | Vulnerabilidade real (simulada) | Bloqueio demonstrado; removido | `PREENCHER` |
+| `requests==2.19.1` adicionada de propósito em `demo/gate-deps` (commit `cfc7fd1`) | `requirements.txt` | Vulnerabilidade real (simulada) | **Quality gate bloqueou** a etapa 4 (Trivy fs: 1 HIGH/CRITICAL); as etapas 5 a 8 ficaram *skipped*, então nenhuma imagem foi publicada nem houve deploy. O pip-audit da etapa 3 listou 37 vulnerabilidades, mas não bloqueia: o gate fica no Trivy. A branch não foi mesclada na `main` e foi apagada depois do teste | [Execução #11](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/runs/41206630012) e print `docs/evidencias/02-gate-bloqueado.png` |
 
 Toda CVE em `.trivyignore` exige justificativa aqui (ex.: código vulnerável não alcançável).
 
@@ -81,11 +79,11 @@ Alertas que o baseline costuma levantar em aplicações Flask e como a aplicaç�
 | Absence of Anti-CSRF Tokens | Possível em `<form>` de login | Avaliar: o login do mockup não envia dados nem tem sessão → candidato a **falso positivo** (justificar) |
 | Server Leaks Version (`Server: gunicorn`) | Possível | Avaliar/aceitar risco ou remover o cabeçalho no proxy |
 
-Resultado real (execução #3, ZAP Baseline contra a imagem em homologação): **0 alertas High e 0 Medium**.
+Resultado real (execução #8, ZAP Baseline contra a imagem em homologação): **0 alertas High e 0 Medium**.
 
 | Achado | Onde (URL) | Classificação | Ação tomada | Resultado |
 |--------|-----------|---------------|-------------|-----------|
-| Alertas Low/Informational | `PREENCHER`: abrir `report_md.md` no artifact `relatorio-07-homologacao-zap` e listar | `PREENCHER` | `PREENCHER` | `PREENCHER` |
+| Alertas Low/Informational | A consultar no `report_md.md` do artifact `relatorio-07-homologacao-zap` (execução #8) | A classificar pela equipe | Nenhuma (a execução #8 não teve alerta High nem Medium) | Execução #8, etapa 7: 0 High, 0 Medium |
 
 ## Aprovação e produção (etapa 8)
 
