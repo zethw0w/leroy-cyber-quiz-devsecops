@@ -540,7 +540,7 @@ jobs:
             echo
             echo "- Imagem: \`${IMAGE_REF}\`"
             echo "- Digest: \`${DIGEST}\`"
-            echo "- Aprovado por: ${aprovador:-${GITHUB_ACTOR} (consulte a aba da execução)}"
+            echo "- Aprovado por: ${aprovador:-nenhuma aprovação registrada}"
             echo "- Data (UTC): $(date -u +'%Y-%m-%d %H:%M:%S')"
             echo "- URL de produção: ${PROD_URL}"
             echo "- Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"

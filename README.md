@@ -1,8 +1,6 @@
 # Leroy Cyber Quiz · Esteira DevSecOps
 
-[![DevSecOps Pipeline](https://github.com/OWNER/REPO/actions/workflows/devsecops.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/devsecops.yml)
-
-> **Trocar `OWNER/REPO`** pelo caminho real do repositório (aqui e no badge acima).
+[![DevSecOps Pipeline](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/workflows/devsecops.yml/badge.svg)](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/workflows/devsecops.yml)
 
 Plataforma educacional de cibersegurança do **Grupo LevelUP** (FIAP Challenge 2026) para os colaboradores da Leroy Merlin Brasil: cenários reais, decisão entre quatro caminhos e consequência narrada, sem ranking e sem pódio. Este repositório leva a aplicação até produção por uma esteira DevSecOps de 8 etapas no GitHub Actions (CP 03 · DevSecOps).
 
@@ -84,7 +82,7 @@ push (qualquer branch)                          somente na main
 | 8 | Aprovação + produção | GitHub Environments | Controle de mudança com revisor obrigatório | Aprovação manual | `relatorio-08-producao` |
 | ★ | Resumo da Esteira | jq + Job Summary | Consolida status e achados; roda sempre | Sempre executa | `resumo-da-esteira` |
 
-Os relatórios da execução mais recente ficam na página de [Actions](https://github.com/OWNER/REPO/actions/workflows/devsecops.yml), seção **Artifacts** de cada execução. Detalhes técnicos de cada etapa em [`docs/pipeline.md`](docs/pipeline.md).
+Os relatórios da execução mais recente ficam na página de [Actions](https://github.com/zethw0w/leroy-cyber-quiz-devsecops/actions/workflows/devsecops.yml), seção **Artifacts** de cada execução. Detalhes técnicos de cada etapa em [`docs/pipeline.md`](docs/pipeline.md).
 
 **Decisão sobre o Resumo.** O Resumo final depende da etapa 8 e só existe após a aprovação. Para que o revisor tenha a visão consolidada *antes* de decidir, a esteira também gera o job **Resumo parcial** (etapas 1 a 7), publicado na aba Summary e como artifact `resumo-parcial`.
 
