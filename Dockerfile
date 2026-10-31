@@ -8,8 +8,10 @@ ENV PIP_NO_CACHE_DIR=1 \
 
 WORKDIR /build
 COPY requirements.txt .
-RUN python -m venv /opt/venv \
- && /opt/venv/bin/pip install --no-compile -r requirements.txt
+# venv SEM pip: o pip do builder instala os pacotes e nada de pip/ferramentas
+# de build (com suas bibliotecas embutidas, ex.: urllib3/msgpack) vai para o runtime.
+RUN python -m venv --without-pip /opt/venv \
+ && pip --python /opt/venv/bin/python install --no-compile -r requirements.txt
 
 # ---------- Estágio 2: runtime mínimo ----------
 FROM python:3.13-alpine AS runtime
@@ -22,10 +24,12 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     APP_VERSION=${GIT_SHA}
 
-# Aplica correções de segurança do SO e remove o pip do runtime
+# Aplica correções de segurança do SO e remove o pip/ensurepip do Python base
 # (reduz a superfície de ataque; as dependências já estão no venv).
 RUN apk upgrade --no-cache \
- && (python -m pip uninstall -y pip setuptools wheel || true) \
+ && rm -rf /usr/local/lib/python3*/site-packages/* \
+           /usr/local/lib/python3*/ensurepip \
+           /usr/local/bin/pip* \
  && addgroup -g 10001 -S app \
  && adduser -u 10001 -S -G app -H -h /app app
 
