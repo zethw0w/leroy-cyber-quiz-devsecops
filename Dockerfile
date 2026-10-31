@@ -45,4 +45,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2).status == 200 else 1)"
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--access-logfile", "-", "wsgi:app"]
+# --no-control-socket: o gunicorn 26 tenta criar /app/.gunicorn (somente leitura para o usuário não-root); o socket de controle não é usado.
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--no-control-socket", "--access-logfile", "-", "wsgi:app"]
