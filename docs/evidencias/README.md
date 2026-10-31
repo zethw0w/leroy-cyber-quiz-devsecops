@@ -1,0 +1,11 @@
+# Evidências
+
+Colocar aqui os prints exigidos pela atividade (nomes sugeridos):
+
+1. `01-execucao-completa.png`: execução completa (8 etapas + Resumo da Esteira) com sucesso
+2. `02-gate-bloqueado.png`: execução bloqueada por um quality gate
+3. `03-aprovacao-producao.png`: tela de aprovação do environment `producao`
+4. `04-packages-ghcr.png`: imagem publicada em Packages
+5. `05-jogo-producao.png`: aplicação em produção
+
+Instruções de como produzir cada uma em [`../setup-github.md`](../setup-github.md).

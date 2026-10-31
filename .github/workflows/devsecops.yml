@@ -1,0 +1,591 @@
+name: DevSecOps Pipeline
+
+# A esteira roda em qualquer branch (para demonstrar os quality gates em
+# branches de teste), mas as etapas 5 a 8 (imagem, homologação e produção)
+# só executam na main.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissão mínima para todos os jobs; quem precisa de mais declara no job.
+permissions:
+  contents: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GITLEAKS_VERSION: "8.28.0"
+  SEMGREP_VERSION: "1.183.0"
+  PIP_AUDIT_VERSION: "2.10.1"
+  PIPDEPTREE_VERSION: "4.2.13"
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Etapa 1: Verificação de secrets (Gitleaks) — bloqueia
+  # ---------------------------------------------------------------------------
+  secrets-scan:
+    name: "1 · Secrets (Gitleaks)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # histórico completo
+
+      - name: Instalar Gitleaks (checksum verificado)
+        run: |
+          set -euo pipefail
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          pacote="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -O "${base}/${pacote}"
+          curl -sSfL -O "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " ${pacote}\$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          mkdir -p "${RUNNER_TEMP}/bin"
+          tar -xzf "${pacote}" -C "${RUNNER_TEMP}/bin" gitleaks
+          echo "${RUNNER_TEMP}/bin" >> "$GITHUB_PATH"
+
+      - name: Gitleaks no histórico completo (--redact)
+        run: |
+          mkdir -p relatorio
+          gitleaks detect --source . --redact --verbose \
+            --report-format json --report-path relatorio/gitleaks.json \
+            --exit-code 1
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-01-gitleaks
+          path: relatorio/gitleaks.json
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Etapa 2: SAST (Semgrep) — bloqueia
+  # ---------------------------------------------------------------------------
+  sast:
+    name: "2 · SAST (Semgrep)"
+    needs: secrets-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write # somente para enviar o SARIF à aba Security
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar Semgrep
+        run: pip install "semgrep==${SEMGREP_VERSION}"
+
+      - name: Semgrep (p/default + p/owasp-top-ten + regras da stack)
+        run: |
+          mkdir -p relatorio
+          semgrep scan \
+            --config p/default \
+            --config p/owasp-top-ten \
+            --config p/python \
+            --config p/flask \
+            --config p/dockerfile \
+            --json-output relatorio/semgrep.json \
+            --sarif-output relatorio/semgrep.sarif \
+            --error \
+            .
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-02-semgrep
+          path: |
+            relatorio/semgrep.json
+            relatorio/semgrep.sarif
+          if-no-files-found: warn
+
+      - name: Enviar SARIF para a aba Security (bônus)
+        if: always() && hashFiles('relatorio/semgrep.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: relatorio/semgrep.sarif
+          category: semgrep
+
+  # ---------------------------------------------------------------------------
+  # Etapa 3: Build, dependências e artefato — bloqueia (build/testes)
+  # ---------------------------------------------------------------------------
+  build:
+    name: "3 · Build + dependências"
+    needs: sast
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Instalar dependências (versões fixadas)
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r requirements-dev.txt
+          .venv/bin/pip install "pip-audit==${PIP_AUDIT_VERSION}" "pipdeptree==${PIPDEPTREE_VERSION}"
+
+      - name: Árvore de dependências e auditoria (informativa)
+        run: |
+          mkdir -p relatorio
+          .venv/bin/pipdeptree > relatorio/arvore-dependencias.txt
+          .venv/bin/pip-audit -r requirements.txt --format json \
+            --output relatorio/pip-audit.json || true
+          .venv/bin/pip-audit -r requirements.txt || true
+
+      - name: Testes automatizados
+        run: .venv/bin/python -m pytest -q
+
+      - name: Empacotar artefato (nomeado pelo SHA)
+        run: |
+          mkdir -p dist
+          tar -czf "dist/leroy-cyber-quiz-${GITHUB_SHA}.tar.gz" \
+            src requirements.txt Dockerfile
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-03-build
+          path: |
+            relatorio/arvore-dependencias.txt
+            relatorio/pip-audit.json
+          if-no-files-found: warn
+
+      - name: Publicar artefato da aplicação
+        uses: actions/upload-artifact@v4
+        with:
+          name: artefato-aplicacao
+          path: dist/leroy-cyber-quiz-${{ github.sha }}.tar.gz
+
+  # ---------------------------------------------------------------------------
+  # Etapa 4: SCA (Trivy fs) — bloqueia HIGH/CRITICAL
+  # ---------------------------------------------------------------------------
+  sca:
+    name: "4 · SCA (Trivy fs)"
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2,ghcr.io/aquasecurity/trivy-db:2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy fs — relatório completo (tabela)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          format: table
+          output: trivy-fs.txt
+          exit-code: "0"
+
+      - name: Trivy fs — relatório filtrado (JSON HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          format: json
+          severity: HIGH,CRITICAL
+          output: trivy-fs.json
+          exit-code: "0"
+
+      - name: Organizar relatórios
+        if: always()
+        run: |
+          mkdir -p relatorio
+          mv trivy-fs.txt trivy-fs.json relatorio/ || true
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-04-trivy-sca
+          path: |
+            relatorio/trivy-fs.txt
+            relatorio/trivy-fs.json
+          if-no-files-found: warn
+
+      - name: Quality gate (HIGH/CRITICAL bloqueiam)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+  # ---------------------------------------------------------------------------
+  # Etapa 5: Docker build + push no GHCR — bloqueia (falha de build)
+  # ---------------------------------------------------------------------------
+  docker-build:
+    name: "5 · Docker build + GHCR"
+    needs: sca
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # somente neste job
+    outputs:
+      image: ${{ steps.nome.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nome da imagem (minúsculas)
+        id: nome
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e push (tag = SHA do commit)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.nome.outputs.image }}:${{ github.sha }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Relatório do build
+        if: always()
+        env:
+          IMAGE: ${{ steps.nome.outputs.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p relatorio
+          {
+            echo "# Relatório: Docker build + GHCR"
+            echo
+            echo "- Imagem: \`${IMAGE}:${GITHUB_SHA}\`"
+            echo "- Digest: \`${DIGEST:-indisponível (build falhou)}\`"
+            echo "- Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            if [[ -n "${DIGEST:-}" ]]; then
+              echo "## Manifesto"
+              echo '```'
+              docker buildx imagetools inspect "${IMAGE}@${DIGEST}" || true
+              echo '```'
+            fi
+          } > relatorio/docker-build.md
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-05-docker-build
+          path: relatorio/docker-build.md
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Etapa 6: Scan da imagem (Trivy image) — bloqueia HIGH/CRITICAL com correção
+  # ---------------------------------------------------------------------------
+  image-scan:
+    name: "6 · Scan da imagem (Trivy)"
+    needs: docker-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2,ghcr.io/aquasecurity/trivy-db:2
+      # Credenciais do registry por variável de ambiente, nunca na linha de comando.
+      TRIVY_USERNAME: ${{ github.actor }}
+      TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      IMAGE_REF: ${{ needs.docker-build.outputs.image }}:${{ github.sha }}
+    steps:
+      - name: Trivy image — relatório completo (tabela)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          format: table
+          output: trivy-image.txt
+          exit-code: "0"
+
+      - name: Trivy image — JSON HIGH/CRITICAL com correção
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          format: json
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          output: trivy-image.json
+          exit-code: "0"
+
+      - name: SBOM CycloneDX (bônus)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          format: cyclonedx
+          output: sbom.cdx.json
+          exit-code: "0"
+
+      - name: Organizar relatórios
+        if: always()
+        run: |
+          mkdir -p relatorio
+          mv trivy-image.txt trivy-image.json sbom.cdx.json relatorio/ || true
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-06-trivy-image
+          path: |
+            relatorio/trivy-image.txt
+            relatorio/trivy-image.json
+            relatorio/sbom.cdx.json
+          if-no-files-found: warn
+
+      - name: Quality gate (HIGH/CRITICAL com correção bloqueiam)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  # ---------------------------------------------------------------------------
+  # Etapa 7: Homologação + DAST (OWASP ZAP Baseline) — informativo
+  # ---------------------------------------------------------------------------
+  dast-staging:
+    name: "7 · Homologação + ZAP"
+    needs: [docker-build, image-scan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: homologacao
+    permissions:
+      contents: read
+      packages: read
+    env:
+      IMAGE_REF: ${{ needs.docker-build.outputs.image }}:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Subir a imagem aprovada no runner (homologação)
+        run: |
+          set -euo pipefail
+          docker run -d --name homologacao -p 8080:8080 "${IMAGE_REF}"
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/healthz > health.json; then break; fi
+            sleep 2
+          done
+          cat health.json
+          test "$(jq -r .version health.json)" = "${GITHUB_SHA}"
+
+      - name: Preparar pasta de relatórios do ZAP
+        run: chmod -R a+rwx "$GITHUB_WORKSPACE"
+
+      - name: ZAP Baseline Scan (somente contra o ambiente do grupo)
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: http://localhost:8080
+          fail_action: false
+          allow_issue_writing: false
+          artifact_name: zap_scan_bruto
+
+      - name: Reunir relatórios do ZAP
+        if: always()
+        run: |
+          mkdir -p relatorio
+          mv report_html.html report_json.json report_md.md relatorio/ || true
+          docker logs homologacao > relatorio/homologacao-app.log 2>&1 || true
+          docker rm -f homologacao || true
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-07-homologacao-zap
+          path: |
+            relatorio/report_html.html
+            relatorio/report_json.json
+            relatorio/report_md.md
+            relatorio/homologacao-app.log
+          if-no-files-found: warn
+
+  # Resumo parcial: disponível para o aprovador ANTES da decisão de produção.
+  resumo-parcial:
+    name: "Resumo parcial (antes da aprovação)"
+    needs: [secrets-scan, sast, build, sca, docker-build, image-scan, dast-staging]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: relatorio-*
+          path: reports
+        continue-on-error: true
+
+      - name: Gerar resumo parcial
+        env:
+          MODE: parcial
+          OUTPUT: resumo-parcial.md
+          RESULT_1: ${{ needs.secrets-scan.result }}
+          RESULT_2: ${{ needs.sast.result }}
+          RESULT_3: ${{ needs.build.result }}
+          RESULT_4: ${{ needs.sca.result }}
+          RESULT_5: ${{ needs.docker-build.result }}
+          RESULT_6: ${{ needs.image-scan.result }}
+          RESULT_7: ${{ needs.dast-staging.result }}
+        run: bash scripts/resumo.sh >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resumo-parcial
+          path: resumo-parcial.md
+
+  # ---------------------------------------------------------------------------
+  # Etapa 8: Aprovação humana + deploy em produção
+  # ---------------------------------------------------------------------------
+  deploy-prod:
+    name: "8 · Aprovação + produção"
+    needs: [docker-build, dast-staging]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # O job fica em espera até um revisor do environment "producao" aprovar.
+    environment:
+      name: producao
+      url: ${{ vars.PROD_URL }}
+    permissions:
+      contents: read
+      actions: read # consultar quem aprovou a execução
+    env:
+      IMAGE_REF: ${{ needs.docker-build.outputs.image }}:${{ github.sha }}
+      DIGEST: ${{ needs.docker-build.outputs.digest }}
+      PROD_URL: ${{ vars.PROD_URL }}
+      # Environment secrets do "producao" (nunca no código):
+      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Conferir configuração de produção
+        run: |
+          test -n "${RENDER_DEPLOY_HOOK_URL}" || { echo "::error::Secret RENDER_DEPLOY_HOOK_URL ausente no environment producao"; exit 1; }
+          test -n "${PROD_URL}" || { echo "::error::Variável PROD_URL ausente no environment producao"; exit 1; }
+          echo "::add-mask::${RENDER_DEPLOY_HOOK_URL}"
+
+      - name: Deploy da imagem pelo SHA (Render)
+        run: |
+          set -euo pipefail
+          alvo="$(jq -rn --arg v "${IMAGE_REF}" '$v|@uri')"
+          curl -fsS -X POST "${RENDER_DEPLOY_HOOK_URL}&imgURL=${alvo}" > /dev/null
+          echo "Deploy solicitado para ${IMAGE_REF}"
+
+      - name: Aguardar produção servir este commit
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 40); do
+            versao="$(curl -fsS --max-time 10 "${PROD_URL%/}/healthz" 2>/dev/null | jq -r .version 2>/dev/null || true)"
+            if [[ "${versao}" == "${GITHUB_SHA}" ]]; then
+              echo "Produção está servindo ${GITHUB_SHA}"
+              exit 0
+            fi
+            echo "Tentativa ${i}/40: versão atual='${versao:-indisponível}'"
+            sleep 15
+          done
+          echo "::error::Produção não passou a servir o commit ${GITHUB_SHA} no tempo esperado"
+          exit 1
+
+      - name: Relatório do deploy
+        if: always()
+        run: |
+          mkdir -p relatorio
+          aprovador="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/approvals" \
+            --jq '[.[] | select(.state=="approved") | .user.login] | join(", ")' 2>/dev/null || true)"
+          {
+            echo "# Relatório: deploy em produção"
+            echo
+            echo "- Imagem: \`${IMAGE_REF}\`"
+            echo "- Digest: \`${DIGEST}\`"
+            echo "- Aprovado por: ${aprovador:-${GITHUB_ACTOR} (consulte a aba da execução)}"
+            echo "- Data (UTC): $(date -u +'%Y-%m-%d %H:%M:%S')"
+            echo "- URL de produção: ${PROD_URL}"
+            echo "- Execução: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > relatorio/deploy-producao.md
+
+      - name: Publicar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-08-producao
+          path: relatorio/deploy-producao.md
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # ★ Resumo da Esteira — roda sempre, mesmo quando uma etapa falha
+  # ---------------------------------------------------------------------------
+  pipeline-summary:
+    name: "★ Resumo da Esteira"
+    needs: [secrets-scan, sast, build, sca, docker-build, image-scan, dast-staging, deploy-prod]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: relatorio-*
+          path: reports
+        continue-on-error: true
+
+      - name: Gerar resumo (tabela na aba Summary + arquivo)
+        env:
+          MODE: final
+          OUTPUT: resumo-esteira.md
+          RESULT_1: ${{ needs.secrets-scan.result }}
+          RESULT_2: ${{ needs.sast.result }}
+          RESULT_3: ${{ needs.build.result }}
+          RESULT_4: ${{ needs.sca.result }}
+          RESULT_5: ${{ needs.docker-build.result }}
+          RESULT_6: ${{ needs.image-scan.result }}
+          RESULT_7: ${{ needs.dast-staging.result }}
+          RESULT_8: ${{ needs.deploy-prod.result }}
+        run: bash scripts/resumo.sh >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resumo-da-esteira
+          path: resumo-esteira.md

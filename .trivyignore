@@ -1,0 +1,3 @@
+# CVEs ignoradas pelo Trivy, uma por linha.
+# Cada CVE só pode ser adicionada com justificativa técnica registrada em
+# docs/observacoes.md (seção Trivy). Hoje não há nenhuma supressão.

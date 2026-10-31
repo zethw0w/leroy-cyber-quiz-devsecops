@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leroy Cyber Quiz · Progresso</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/common.js" defer></script>
+  <script src="/static/js/progresso.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="marca">Cyber Quiz</span>
+    <nav>
+      <a href="/dashboard">Início</a>
+      <a href="/quiz">Quiz</a>
+      <a href="/progresso">Progresso</a>
+    </nav>
+  </header>
+  <main>
+    <div class="eyebrow">Sua jornada</div>
+    <h1 id="nome">Carregando…</h1>
+    <p id="sub"></p>
+    <p class="eyebrow">Marcador pessoal: <span id="inicial"></span></p>
+
+    <section class="metricas" aria-label="Estatísticas pessoais">
+      <div><strong id="p-xp">–</strong><span class="eyebrow">Pontos XP</span></div>
+      <div><strong id="p-missoes">–</strong><span class="eyebrow">Missões</span></div>
+      <div><strong id="p-trofeus">–</strong><span class="eyebrow">Troféus</span></div>
+      <div><strong id="p-streak">–</strong><span class="eyebrow">Streak</span></div>
+    </section>
+
+    <div class="eyebrow">XP rumo ao próximo nível</div>
+    <h2 id="xp-texto"></h2>
+    <div class="barra"><div id="xp-barra" class="preenchido"></div></div>
+
+    <div class="eyebrow">Conquistas</div>
+    <div id="trofeus" class="trofeus"></div>
+
+    <a class="botao" href="/dashboard">Continue sua jornada</a>
+  </main>
+</body>
+</html>

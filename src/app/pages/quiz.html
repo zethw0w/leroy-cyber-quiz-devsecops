@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leroy Cyber Quiz · Cenário</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/common.js" defer></script>
+  <script src="/static/js/quiz.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="marca">Cyber Quiz</span>
+    <nav>
+      <a href="/dashboard">← Voltar</a>
+      <a href="/progresso">Progresso</a>
+    </nav>
+  </header>
+  <main>
+    <div id="trilha" class="eyebrow">Cenário · Decisão</div>
+    <h1 id="titulo">Carregando…</h1>
+
+    <section class="whatsapp" aria-label="Mensagem recebida">
+      <span id="remetente" class="quem"></span>
+      <time id="horario"></time>
+      <p id="mensagem"></p>
+    </section>
+
+    <h2>Como você responde?</h2>
+    <div id="opcoes" class="opcoes"></div>
+
+    <section id="consequencia" class="consequencia oculto" aria-live="polite">
+      <div id="c-rotulo" class="eyebrow">Consequência</div>
+      <h3 id="c-titulo"></h3>
+      <p id="c-texto"></p>
+      <strong id="c-xp"></strong>
+    </section>
+  </main>
+</body>
+</html>

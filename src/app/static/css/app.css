@@ -1,0 +1,135 @@
+:root {
+  --floresta: #1d3024;
+  --floresta-2: #243b2c;
+  --papel: #f6f3ec;
+  --lm-green: #5fa218;
+  --lm-bright: #78be20;
+  --tinta: #1d3024;
+  --suave: #5b6b5f;
+  --linha: #d9d3c3;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--sans);
+  line-height: 1.5;
+}
+
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; margin: 0; }
+a { color: var(--lm-green); }
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--suave);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 2rem;
+  border-bottom: 1px solid var(--linha);
+}
+.topbar .marca { font-family: var(--serif); font-style: italic; font-size: 1.2rem; }
+.topbar nav a { margin-left: 1.5rem; text-decoration: none; color: var(--tinta); font-size: 0.9rem; }
+.topbar nav a:hover { color: var(--lm-green); }
+
+main { max-width: 1040px; margin: 0 auto; padding: 2.5rem 2rem 4rem; }
+
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--linha);
+  margin: 2rem 0;
+}
+.metricas div { padding: 1.2rem; text-align: center; border-right: 1px solid var(--linha); }
+.metricas div:last-child { border-right: 0; }
+.metricas strong { display: block; font-family: var(--serif); font-size: 2rem; font-weight: 400; }
+
+.continue {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--floresta);
+  color: var(--papel);
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 2rem;
+}
+.continue .eyebrow { color: var(--lm-bright); }
+.continue strong { font-family: var(--serif); font-size: 1.3rem; font-weight: 400; }
+
+.botao {
+  display: inline-block;
+  background: var(--lm-green);
+  color: #fff;
+  border: 0;
+  padding: 0.8rem 1.6rem;
+  font: inherit;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+.botao:hover { background: var(--lm-bright); }
+
+.trilhas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--linha); border: 1px solid var(--linha); }
+.trilha { background: var(--papel); padding: 1.5rem; }
+.trilha .numero { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--lm-green); }
+.trilha h3 { font-size: 1.4rem; font-style: italic; margin: 0.4rem 0; }
+.trilha p { margin: 0 0 0.8rem; color: var(--suave); font-size: 0.9rem; }
+
+/* Login */
+.split { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+.split .lado-marca { background: var(--floresta); color: var(--papel); padding: 4rem; display: flex; flex-direction: column; justify-content: space-between; }
+.split .lado-marca h1 { font-size: 3rem; line-height: 1.15; }
+.split .lado-marca h1 em { color: var(--lm-bright); }
+.split .stats { display: flex; gap: 2.5rem; }
+.split .stats strong { display: block; font-family: var(--serif); font-size: 1.8rem; font-weight: 400; }
+.split .lado-form { padding: 4rem; display: flex; flex-direction: column; justify-content: center; max-width: 480px; }
+.split .lado-form h2 { font-size: 2.4rem; font-style: italic; }
+.campo { margin-top: 1.5rem; }
+.campo label { display: block; margin-bottom: 0.3rem; }
+.campo input[type="email"], .campo input[type="password"] {
+  width: 100%; border: 0; border-bottom: 1px solid var(--tinta); background: transparent; padding: 0.5rem 0; font: inherit;
+}
+.linha-opcoes { display: flex; justify-content: space-between; margin: 1.2rem 0; font-size: 0.85rem; }
+
+/* Quiz */
+.whatsapp { background: #fff; border: 1px solid var(--linha); padding: 1.2rem 1.5rem; margin: 1.5rem 0; max-width: 640px; }
+.whatsapp .quem { font-weight: 600; font-size: 0.85rem; color: var(--lm-green); }
+.whatsapp time { float: right; font-size: 0.75rem; color: var(--suave); }
+.opcoes { display: grid; gap: 0.6rem; max-width: 640px; }
+.opcao {
+  display: flex; gap: 1rem; text-align: left; background: transparent; border: 1px solid var(--linha);
+  padding: 0.9rem 1.1rem; font: inherit; color: inherit; cursor: pointer;
+}
+.opcao:hover:not([disabled]) { border-color: var(--lm-green); }
+.opcao[disabled] { cursor: default; opacity: 0.7; }
+.opcao .letra { font-family: var(--serif); font-style: italic; color: var(--lm-green); }
+.consequencia { margin-top: 1.5rem; padding: 1.2rem 1.5rem; border-left: 4px solid var(--lm-green); background: #fff; max-width: 640px; }
+.consequencia h3 { font-style: italic; font-size: 1.5rem; margin: 0.3rem 0; }
+.oculto { display: none; }
+
+/* Progresso */
+.barra { height: 6px; background: #d9cfb4; position: relative; margin: 0.6rem 0 1.5rem; }
+.barra .preenchido { height: 100%; background: var(--lm-green); }
+.trofeus { display: flex; gap: 0.8rem; margin: 1rem 0 2rem; }
+.trofeu { width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--linha); display: grid; place-items: center; color: #b9ae8a; }
+.trofeu.bronze { background: #b0825a; color: #fff; border: 0; }
+.trofeu.prata { background: #8b95a1; color: #fff; border: 0; }
+
+@media (max-width: 760px) {
+  .split { grid-template-columns: 1fr; }
+  .split .lado-marca, .split .lado-form { padding: 2rem; max-width: none; }
+  .metricas { grid-template-columns: repeat(2, 1fr); }
+  .trilhas { grid-template-columns: 1fr; }
+}

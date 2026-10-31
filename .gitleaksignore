@@ -1,0 +1,3 @@
+# Fingerprints de falsos positivos do Gitleaks.
+# Cada linha só pode ser adicionada com justificativa registrada em
+# docs/observacoes.md (seção Gitleaks). Hoje não há nenhuma supressão.

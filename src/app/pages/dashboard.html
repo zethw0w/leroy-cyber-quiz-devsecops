@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leroy Cyber Quiz · Painel</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/common.js" defer></script>
+  <script src="/static/js/dashboard.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <span class="marca">Cyber Quiz</span>
+    <nav>
+      <a href="/dashboard">Início</a>
+      <a href="/quiz">Quiz</a>
+      <a href="/progresso">Progresso</a>
+    </nav>
+  </header>
+  <main>
+    <div id="contexto" class="eyebrow"></div>
+    <h1 id="saudacao">Carregando…</h1>
+
+    <section class="metricas" aria-label="Métricas pessoais">
+      <div><strong id="m-pontos">–</strong><span class="eyebrow">Pontos</span></div>
+      <div><strong id="m-trofeus">–</strong><span class="eyebrow">Troféus</span></div>
+      <div><strong id="m-dias">–</strong><span class="eyebrow">Dias</span></div>
+      <div><strong id="m-nivel">–</strong><span class="eyebrow">Nível</span></div>
+    </section>
+
+    <section class="continue">
+      <div>
+        <div class="eyebrow">Continue de onde parou</div>
+        <strong id="continue-titulo">–</strong>
+      </div>
+      <a id="continue-link" class="botao" href="/quiz">Retomar</a>
+    </section>
+
+    <section id="trilhas" class="trilhas" aria-label="Trilhas"></section>
+  </main>
+</body>
+</html>

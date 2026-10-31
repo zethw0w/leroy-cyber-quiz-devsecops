@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leroy Cyber Quiz · Acesso</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/login.js" defer></script>
+</head>
+<body>
+  <div class="split">
+    <section class="lado-marca">
+      <div>
+        <div class="eyebrow">Leroy Merlin · Conscientização</div>
+        <h1>Mais <em>conhecimento.</em><br>Mais <em>consciência.</em><br>Mais <em>segurança.</em></h1>
+        <p>Sua jornada de aprendizado começa aqui, no seu ritmo. Cinco minutos do seu dia para proteger você, sua equipe e nossos clientes.</p>
+      </div>
+      <div class="stats">
+        <div><strong>14k</strong><span class="eyebrow">Colabs</span></div>
+        <div><strong>6</strong><span class="eyebrow">Trilhas</span></div>
+        <div><strong>5 min</strong><span class="eyebrow">Por dia</span></div>
+      </div>
+    </section>
+    <section class="lado-form">
+      <div class="eyebrow">Acesso · Colaboradores</div>
+      <h2>Bom retorno.</h2>
+      <p>Cuidar de você é cuidar da gente.</p>
+      <form id="form-login" autocomplete="on">
+        <div class="campo">
+          <label for="email" class="eyebrow">E-mail corporativo</label>
+          <input id="email" name="email" type="email" autocomplete="username" placeholder="nome.sobrenome@exemplo.com.br" required>
+        </div>
+        <div class="campo">
+          <label for="senha" class="eyebrow">Senha</label>
+          <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="linha-opcoes">
+          <label><input type="checkbox" name="manter"> Manter-me conectado</label>
+          <a href="/">Esqueci minha senha</a>
+        </div>
+        <button class="botao" type="submit">Entrar</button>
+      </form>
+      <p class="eyebrow">Versão de demonstração · nenhuma credencial é enviada</p>
+    </section>
+  </div>
+</body>
+</html>
